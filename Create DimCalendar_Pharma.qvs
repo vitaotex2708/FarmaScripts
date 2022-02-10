@@ -75,6 +75,8 @@ If vQtde_Loop_MQT > 0 Then
 	
 	Next
 	
+
+	
 	INNER JOIN ([MQT])
 	LOAD
 		[Des_MQT]
