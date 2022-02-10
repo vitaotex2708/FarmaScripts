@@ -1,0 +1,268 @@
+vQtde_Loop_MTH = 24;
+vQtde_Loop_MQT = 24;
+vQtde_Loop_YTD = 24;
+vQtde_Loop_MAT = 24;
+
+_Temp_Períodos:
+NOCONCATENATE
+LOAD DISTINCT
+	Date# ([AnoMês Key], 'YYYYMM') as [AnoMês Key]
+RESIDENT
+	[Controle Períodos];
+    
+Drop Table [Controle Períodos];    
+	
+//*********************************************************
+//Consolidação Períodos
+//*********************************************************
+	
+	[Dt_Ref]:
+	LOAD
+		Max ([AnoMês Key])	as [Dt_Ref]
+	RESIDENT		
+		_Temp_Períodos;
+		
+//*********************************************************
+//Define as variáveis de referência dos períodos
+//*********************************************************
+
+	LET Dt_Ref = Date (Peek ('Dt_Ref', -1, 'Dt_Ref'), 'DD/MM/YYYY');
+    Trace $(Dt_Ref);
+	Drop Tables [Dt_Ref];
+
+	
+//*********************************************************
+//Gera tabela de MTH
+//*********************************************************
+If vQtde_Loop_MTH > 0 Then
+
+	For Cont_Periodos = -1 to -$(vQtde_Loop_MTH) step -1
+	
+		[MTH]:
+		LOAD
+			*,
+			'F'	as [Flag_Periodo_Movel]
+		WHERE
+			Exists ([AnoMês Key]);
+		LOAD
+			Date(AddMonths ('$(Dt_Ref)', $(Cont_Periodos) + 1), 'MMM YYYY') 							as [Des_MTH],
+			Fabs ($(Cont_Periodos))																		as [Cod_Seq_MTH],
+			Num# (Text (Date (MonthName (AddMonths ('$(Dt_Ref)', $(Cont_Periodos) + 1)), 'YYYYMM')))	as [AnoMês Key]			
+		AUTOGENERATE(1);
+	
+	Next
+
+End If
+
+//*********************************************************
+//Gera tabela de MQT
+//*********************************************************
+If vQtde_Loop_MQT > 0 Then
+
+	For Cont_Periodos = -1 to -$(vQtde_Loop_MQT) step -1
+	
+		[MQT]:
+		LOAD
+			*,
+			If (Mod (Cod_Seq_MQT, 3) = '1', 'F', 'M') as [Flag_Periodo_Movel]
+		WHERE
+			Exists([AnoMês Key]);
+		LOAD
+			Date(AddMonths ('$(Dt_Ref)', $(Cont_Periodos) + 1), 'MMM YYYY') 															as [Des_MQT],
+			Fabs($(Cont_Periodos))																										as [Cod_Seq_MQT],
+			Num# (Text (Date (MonthName (AddMonths (AddMonths ('$(Dt_Ref)', (RecNo() - 1) * -1), $(Cont_Periodos) + 1)), 'YYYYMM')))	as [AnoMês Key]
+		AUTOGENERATE (3);
+	
+	Next
+	
+	INNER JOIN ([MQT])
+	LOAD
+		[Des_MQT]
+	WHERE
+		[#_Meses] = 3;
+	LOAD
+		[Des_MQT],
+		Count ([AnoMês Key]) as [#_Meses]
+	RESIDENT
+		[MQT]
+	GROUP BY
+		[Des_MQT];
+
+End If
+
+//*********************************************************
+//Gera tabela de YTD
+//*********************************************************
+If vQtde_Loop_YTD > 0 Then
+
+	For Cont_Periodos = -1 to -$(vQtde_Loop_YTD) step -1
+	
+		[YTD]:
+		LOAD
+			*,
+			If (Mod (Cod_Seq_YTD, 12) = '1', 'F', 'M') as [Flag_Periodo_Movel]
+		WHERE
+			Exists([AnoMês Key]);
+		LOAD
+			Date(AddMonths ('$(Dt_Ref)', $(Cont_Periodos) + 1), 'MMM YYYY') 															as [Des_YTD],
+			Fabs ($(Cont_Periodos))																										as [Cod_Seq_YTD],
+			Num# (Text (Date (MonthName (AddMonths (AddMonths ('$(Dt_Ref)', (RecNo () - 1) * -1), $(Cont_Periodos) + 1)), 'YYYYMM')))	as [AnoMês Key]
+		AUTOGENERATE (12);
+	
+	Next
+	
+	INNER JOIN ([YTD])
+	LOAD
+		[Des_YTD],
+		[AnoMês Key]
+	RESIDENT
+		[YTD]
+	WHERE
+		Left ([AnoMês Key], 4) = Year (Des_YTD);
+
+	INNER JOIN ([YTD])
+	LOAD
+		[Des_YTD]
+	WHERE
+		Right (Min_Periodo, 2) = '01';
+	LOAD
+		[Des_YTD],
+		Min ([AnoMês Key])	as Min_Periodo
+	RESIDENT
+		[YTD]
+	GROUP BY
+		[Des_YTD];
+		
+End If
+
+//*********************************************************
+//Gera tabela de MAT
+//*********************************************************
+If vQtde_Loop_MAT > 0 Then
+
+	For Cont_Periodos = -1 to -$(vQtde_Loop_MAT) step -1
+	
+		[MAT]:
+		LOAD
+			*,
+			If (Mod (Cod_Seq_MAT, 12) = '1', 'F', 'M') as [Flag_Periodo_Movel]
+			
+		WHERE
+			Exists([AnoMês Key]);
+		LOAD
+			Date(AddMonths ('$(Dt_Ref)', $(Cont_Periodos) + 1), 'MMM YYYY') 															as [Des_MAT],
+			Fabs($(Cont_Periodos))																										as [Cod_Seq_MAT],
+			Num# (Text (Date (MonthName (AddMonths (AddMonths ('$(Dt_Ref)', (RecNo() - 1) * -1), $(Cont_Periodos) + 1)), 'YYYYMM')))	as [AnoMês Key]
+		AUTOGENERATE (12);
+	
+	Next
+	
+	INNER JOIN ([MAT])
+	LOAD
+		[Des_MAT]
+	WHERE
+		[#_Meses] = 12;
+	LOAD
+		[Des_MAT],
+		Count ([AnoMês Key]) as [#_Meses]
+	RESIDENT
+		[MAT]
+	GROUP BY
+		[Des_MAT];
+
+End If
+
+//*********************************************************
+//Gera tabela de períodos
+//*********************************************************
+
+For Each v_Tipo_Periodo in 'MAT', 'YTD', 'MQT', 'MTH'
+
+	If vQtde_Loop_$(v_Tipo_Periodo) > 0 Then
+
+		[TMP_Periodos]:
+		LOAD DISTINCT
+			AutoNumber ('$(v_Tipo_Periodo)')									as [Period_Type_Code],
+			'$(v_Tipo_Periodo)'													as [Period_Type],
+			AutoNumber ([Cod_Seq_$(v_Tipo_Periodo)], '$(v_Tipo_Periodo)')		as [Cod_Seq_Periodo],
+			[Des_$(v_Tipo_Periodo)]												as [Period],
+			Year ([Des_$(v_Tipo_Periodo)])										as [Year],
+			Month ([Des_$(v_Tipo_Periodo)])										as [Month],
+			[AnoMês Key]
+		RESIDENT
+			[$(v_Tipo_Periodo)]
+		WHERE
+			[Flag_Periodo_Movel] = 'F'
+		ORDER BY
+			[Cod_Seq_$(v_Tipo_Periodo)] ASC;
+			
+		Drop Tables [$(v_Tipo_Periodo)];
+
+	End If
+	
+Next
+
+	[Periodos]:
+	NOCONCATENATE 
+	LOAD DISTINCT
+    	[AnoMês Key],
+		[Period_Type] 			as [Período.Tipo],
+        [Cod_Seq_Periodo]		as [Período.Sequência],
+        [Period]				as [Período],
+        [Year]					as [Ano],
+        [Month]					as [Mês]
+	RESIDENT
+		[TMP_Periodos]
+	ORDER BY
+		[Period_Type_Code],
+		[Cod_Seq_Periodo];
+
+	LEFT JOIN ([Periodos])
+	LOAD
+		[Período.Tipo],
+		[Período.Sequência],    	
+    	If ([Período.Tipo] = 'MTH', Only (Período), Date (Date# (Min ([AnoMês Key]), 'YYYYMM'), 'MMM YY') & '-' & Date (Date# (Max ([AnoMês Key]), 'YYYYMM'), 'MMM YY')) as [Período.Longo]
+	RESIDENT
+		[Periodos]
+	GROUP BY
+		[Período.Tipo],
+		[Período.Sequência];
+        
+	Drop Tables [TMP_Periodos];
+
+	NoConcatenate
+    PeriodosAux:
+    LOAD DISTINCT
+    	[AnoMês Key] as [AnoMês Key Aux]
+    RESIDENT
+    	[Periodos];
+    Load Distinct [AnoMês Key] as [AnoMês Key Aux]
+    Resident [MDTR FATO]
+    Where not Exists([AnoMês Key Aux],[AnoMês Key]);
+    
+    INNER JOIN ([MDTR FATO])
+    Load [AnoMês Key Aux] as [AnoMês Key]
+    resident PeriodosAux;
+    
+    Drop Table PeriodosAux;
+     
+    LEFT JOIN ([Periodos])
+    Load * Inline [
+    Período.Tipo, Período.Sequência, Período.Sequência.Evolução
+    MTH, 1, 1
+    MTH, 13, 2
+    MQT, 1, 1
+    MQT, 5, 2
+    YTD, 1, 1
+    YTD, 2, 2
+    MAT, 1, 1
+    MAT, 2, 2
+    ];
+
+vQtde_Loop_MTH =;
+vQtde_Loop_MQT =;
+vQtde_Loop_YTD =;
+vQtde_Loop_MAT =;
+v_Tipo_Periodo =;
+Cont_Periodos =;
+Dt_Ref =;

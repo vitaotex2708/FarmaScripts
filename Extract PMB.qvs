@@ -1,0 +1,904 @@
+﻿LET vStart = Now ();
+
+SET ThousandSep='.';
+SET DecimalSep=',';
+SET MoneyThousandSep='.';
+SET MoneyDecimalSep=',';
+SET MoneyFormat='R$#.##0,00;-R$#.##0,00';
+SET TimeFormat='hh:mm:ss';
+SET DateFormat='DD/MM/YYYY';
+SET TimestampFormat='DD/MM/YYYY hh:mm:ss[.fff]';
+SET FirstWeekDay=6;
+SET BrokenWeeks=1;
+SET ReferenceDay=0;
+SET FirstMonthOfYear=1;
+SET CollationLocale='pt-BR';
+SET CreateSearchIndexOnReload=1;
+SET MonthNames='jan;fev;mar;abr;mai;jun;jul;ago;set;out;nov;dez';
+SET LongMonthNames='janeiro;fevereiro;março;abril;maio;junho;julho;agosto;setembro;outubro;novembro;dezembro';
+SET DayNames='seg;ter;qua;qui;sex;sáb;dom';
+SET LongDayNames='segunda-feira;terça-feira;quarta-feira;quinta-feira;sexta-feira;sábado;domingo';
+
+
+//********************************************************************************
+//Data Referência
+//********************************************************************************
+
+[Data de Referência]:
+	FIRST (1)
+	LOAD
+		Date (Date# (SubField (FileBaseName(), '_', 5), 'YYYYMM'), 'DD/MM/YYYY') as [Data de Referência]
+	FROM
+		[lib://Dados - PMB/FFFT_BRA_PM_R_??????.txt] (ansi, fix, no labels, header is 0, record is line);
+	
+	LET v_Data_Referencia = Peek('Data de Referência', -1, 'Data de Referência');
+    
+	Drop Table [Data de Referência];
+    
+
+//********************************************************************************
+//Variaveis Auxiliares Mensais
+//********************************************************************************
+
+	For v_Mes_Counter = 1 to 60
+		LET v_Mes_Counter_2 = Text (Right ('0' & $(v_Mes_Counter), 2));
+		LET v_Mes_$(v_Mes_Counter_2) = Num#(Text(Date(AddMonths('$(v_Data_Referencia)',  -$(v_Mes_Counter)+1 ),  'YYYYMM')));
+	trace $(v_Mes_$(v_Mes_Counter_2));
+    Next;
+   
+    
+//***************************************************************************
+//Extração de Dados - IMS (PMB)
+//***************************************************************************
+
+LET vLogStart = NOW();	
+	
+[Extração PMB]:
+LOAD
+	@9:10 										as Region,
+	@13:17										as Product,
+	@16:22 										as Pack,
+	@23:32 										as FCC,
+		
+	Num (Num# (@39:52), '#.##0')				as Units_01,
+	Num (Num# (@54:67), '#.##0')				as Units_02,
+	Num (Num# (@69:82), '#.##0')				as Units_03,
+	Num (Num# (@84:97), '#.##0')				as Units_04,
+	Num (Num# (@99:112), '#.##0')				as Units_05,
+	Num (Num# (@114:127), '#.##0')				as Units_06,
+	Num (Num# (@129:142), '#.##0')				as Units_07,
+	Num (Num# (@144:157), '#.##0')				as Units_08,
+	Num (Num# (@159:172), '#.##0')				as Units_09,
+	Num (Num# (@174:187), '#.##0')				as Units_10,
+	Num (Num# (@189:202), '#.##0')				as Units_11,
+	Num (Num# (@204:217), '#.##0')				as Units_12,
+	Num (Num# (@219:232), '#.##0')				as Units_13,
+	Num (Num# (@234:247), '#.##0')				as Units_14,
+	Num (Num# (@249:262), '#.##0')				as Units_15,
+	Num (Num# (@264:277), '#.##0')				as Units_16,
+	Num (Num# (@279:292), '#.##0')				as Units_17,
+	Num (Num# (@294:307), '#.##0')				as Units_18,
+	Num (Num# (@309:322), '#.##0')				as Units_19,
+	Num (Num# (@324:337), '#.##0')				as Units_20,
+	Num (Num# (@339:352), '#.##0')				as Units_21,
+	Num (Num# (@354:367), '#.##0')				as Units_22,
+	Num (Num# (@369:382), '#.##0')				as Units_23,
+	Num (Num# (@384:397), '#.##0')				as Units_24,
+	Num (Num# (@399:412), '#.##0')				as Units_25,
+	Num (Num# (@414:427), '#.##0')				as Units_26,
+	Num (Num# (@429:442), '#.##0')				as Units_27,
+	Num (Num# (@444:457), '#.##0')				as Units_28,
+	Num (Num# (@459:472), '#.##0')				as Units_29,
+	Num (Num# (@474:487), '#.##0')				as Units_30,
+	Num (Num# (@489:502), '#.##0')				as Units_31,
+	Num (Num# (@504:517), '#.##0')				as Units_32,
+	Num (Num# (@519:532), '#.##0')				as Units_33,
+	Num (Num# (@534:547), '#.##0')				as Units_34,
+	Num (Num# (@549:562), '#.##0')				as Units_35,
+	Num (Num# (@564:577), '#.##0')				as Units_36,
+	Num (Num# (@579:592), '#.##0')				as Units_37,
+	Num (Num# (@594:607), '#.##0')				as Units_38,
+	Num (Num# (@609:622), '#.##0')				as Units_39,
+	Num (Num# (@624:637), '#.##0')				as Units_40,
+	Num (Num# (@639:652), '#.##0')				as Units_41,
+	Num (Num# (@654:667), '#.##0')				as Units_42,
+	Num (Num# (@669:682), '#.##0')				as Units_43,
+	Num (Num# (@684:697), '#.##0')				as Units_44,
+	Num (Num# (@699:712), '#.##0')				as Units_45,
+	Num (Num# (@714:727), '#.##0')				as Units_46,
+	Num (Num# (@729:742), '#.##0')				as Units_47,
+	Num (Num# (@744:757), '#.##0')				as Units_48,
+	Num (Num# (@759:772), '#.##0')				as Units_49,
+	Num (Num# (@774:787), '#.##0')				as Units_50,
+	Num (Num# (@789:802), '#.##0')				as Units_51,
+	Num (Num# (@804:817), '#.##0')				as Units_52,
+	Num (Num# (@819:832), '#.##0')				as Units_53,
+	Num (Num# (@834:847), '#.##0')				as Units_54,
+	Num (Num# (@849:862), '#.##0')				as Units_55,
+	Num (Num# (@864:877), '#.##0')				as Units_56,
+	Num (Num# (@879:892), '#.##0')				as Units_57,
+	Num (Num# (@894:907), '#.##0')				as Units_58,
+	Num (Num# (@909:922), '#.##0')				as Units_59,
+	Num (Num# (@924:937), '#.##0')				as Units_60,
+	
+	Num (Num# (@939:952) / 100, '#.##0,00')		as Values_01,
+	Num (Num# (@954:967) / 100, '#.##0,00')		as Values_02,
+	Num (Num# (@969:982) / 100, '#.##0,00')		as Values_03,
+	Num (Num# (@984:997) / 100, '#.##0,00')		as Values_04,
+	Num (Num# (@999:1012) / 100, '#.##0,00')	as Values_05,
+	Num (Num# (@1014:1027) / 100, '#.##0,00')	as Values_06,
+	Num (Num# (@1029:1042) / 100, '#.##0,00')	as Values_07,
+	Num (Num# (@1044:1057) / 100, '#.##0,00')	as Values_08,
+	Num (Num# (@1059:1072) / 100, '#.##0,00')	as Values_09,
+	Num (Num# (@1074:1087) / 100, '#.##0,00')	as Values_10,
+	Num (Num# (@1089:1102) / 100, '#.##0,00')	as Values_11,
+	Num (Num# (@1104:1117) / 100, '#.##0,00')	as Values_12,
+	Num (Num# (@1119:1132) / 100, '#.##0,00')	as Values_13,
+	Num (Num# (@1134:1147) / 100, '#.##0,00')	as Values_14,
+	Num (Num# (@1149:1162) / 100, '#.##0,00')	as Values_15,
+	Num (Num# (@1164:1177) / 100, '#.##0,00')	as Values_16,
+	Num (Num# (@1179:1192) / 100, '#.##0,00')	as Values_17,
+	Num (Num# (@1194:1207) / 100, '#.##0,00')	as Values_18,
+	Num (Num# (@1209:1222) / 100, '#.##0,00')	as Values_19,
+	Num (Num# (@1224:1237) / 100, '#.##0,00')	as Values_20,
+	Num (Num# (@1239:1252) / 100, '#.##0,00')	as Values_21,
+	Num (Num# (@1254:1267) / 100, '#.##0,00')	as Values_22,
+	Num (Num# (@1269:1282) / 100, '#.##0,00')	as Values_23,
+	Num (Num# (@1284:1297) / 100, '#.##0,00')	as Values_24,
+	Num (Num# (@1299:1312) / 100, '#.##0,00')	as Values_25,
+	Num (Num# (@1314:1327) / 100, '#.##0,00')	as Values_26,
+	Num (Num# (@1329:1342) / 100, '#.##0,00')	as Values_27,
+	Num (Num# (@1344:1357) / 100, '#.##0,00')	as Values_28,
+	Num (Num# (@1359:1372) / 100, '#.##0,00')	as Values_29,
+	Num (Num# (@1374:1387) / 100, '#.##0,00')	as Values_30,
+	Num (Num# (@1389:1402) / 100, '#.##0,00')	as Values_31,
+	Num (Num# (@1404:1417) / 100, '#.##0,00')	as Values_32,
+	Num (Num# (@1419:1432) / 100, '#.##0,00')	as Values_33,
+	Num (Num# (@1434:1447) / 100, '#.##0,00')	as Values_34,
+	Num (Num# (@1449:1462) / 100, '#.##0,00')	as Values_35,
+	Num (Num# (@1464:1477) / 100, '#.##0,00')	as Values_36,
+	Num (Num# (@1479:1492) / 100, '#.##0,00')	as Values_37,
+	Num (Num# (@1494:1507) / 100, '#.##0,00')	as Values_38,
+	Num (Num# (@1509:1522) / 100, '#.##0,00')	as Values_39,
+	Num (Num# (@1524:1537) / 100, '#.##0,00')	as Values_40,
+	Num (Num# (@1539:1552) / 100, '#.##0,00')	as Values_41,
+	Num (Num# (@1554:1567) / 100, '#.##0,00')	as Values_42,
+	Num (Num# (@1569:1582) / 100, '#.##0,00')	as Values_43,
+	Num (Num# (@1584:1597) / 100, '#.##0,00')	as Values_44,
+	Num (Num# (@1599:1612) / 100, '#.##0,00')	as Values_45,
+	Num (Num# (@1614:1627) / 100, '#.##0,00')	as Values_46,
+	Num (Num# (@1629:1642) / 100, '#.##0,00')	as Values_47,
+	Num (Num# (@1644:1657) / 100, '#.##0,00')	as Values_48,
+	Num (Num# (@1659:1672) / 100, '#.##0,00')	as Values_49,
+	Num (Num# (@1674:1687) / 100, '#.##0,00')	as Values_50,
+	Num (Num# (@1689:1702) / 100, '#.##0,00')	as Values_51,
+	Num (Num# (@1704:1717) / 100, '#.##0,00')	as Values_52,
+	Num (Num# (@1719:1732) / 100, '#.##0,00')	as Values_53,
+	Num (Num# (@1734:1747) / 100, '#.##0,00')	as Values_54,
+	Num (Num# (@1749:1762) / 100, '#.##0,00')	as Values_55,
+	Num (Num# (@1764:1777) / 100, '#.##0,00')	as Values_56,
+	Num (Num# (@1779:1792) / 100, '#.##0,00')	as Values_57,
+	Num (Num# (@1794:1807) / 100, '#.##0,00')	as Values_58,
+	Num (Num# (@1809:1822) / 100, '#.##0,00')	as Values_59,
+	Num (Num# (@1824:1837) / 100, '#.##0,00')	as Values_60,
+    
+	Num (Num# (@1839:1852), '#.##0')			as PPP_01,        
+	Num (Num# (@1854:1867), '#.##0')			as PPP_02,
+	Num (Num# (@1869:1882), '#.##0')			as PPP_03,
+	Num (Num# (@1884:1897), '#.##0')			as PPP_04,
+	Num (Num# (@1899:1912), '#.##0')			as PPP_05,
+	Num (Num# (@1914:1927), '#.##0')			as PPP_06,
+	Num (Num# (@1929:1942), '#.##0')			as PPP_07,
+	Num (Num# (@1944:1957), '#.##0')			as PPP_08,
+	Num (Num# (@1959:1972), '#.##0')			as PPP_09,
+	Num (Num# (@1974:1987), '#.##0')			as PPP_10,
+	Num (Num# (@1989:2002), '#.##0')			as PPP_11,
+	Num (Num# (@2004:2017), '#.##0')			as PPP_12,
+	Num (Num# (@2019:2032), '#.##0')			as PPP_13,
+	Num (Num# (@2034:2047), '#.##0')			as PPP_14,
+	Num (Num# (@2049:2062), '#.##0')			as PPP_15,
+	Num (Num# (@2064:2077), '#.##0')			as PPP_16,
+	Num (Num# (@2079:2092), '#.##0')			as PPP_17,
+	Num (Num# (@2094:2107), '#.##0')			as PPP_18,
+	Num (Num# (@2109:2122), '#.##0')			as PPP_19,       
+	Num (Num# (@2124:2137), '#.##0')			as PPP_20,
+	Num (Num# (@2139:2152), '#.##0')			as PPP_21,
+	Num (Num# (@2154:2167), '#.##0')			as PPP_22,
+	Num (Num# (@2169:2182), '#.##0')			as PPP_23,
+	Num (Num# (@2184:2197), '#.##0')			as PPP_24,
+	Num (Num# (@2199:2212), '#.##0')			as PPP_25,
+	Num (Num# (@2214:2227), '#.##0')			as PPP_26,
+	Num (Num# (@2229:2242), '#.##0')			as PPP_27,
+	Num (Num# (@2244:2257), '#.##0')			as PPP_28,
+	Num (Num# (@2259:2272), '#.##0')			as PPP_29,
+	Num (Num# (@2274:2287), '#.##0')			as PPP_30,        
+	Num (Num# (@2289:2302), '#.##0')			as PPP_31,
+	Num (Num# (@2304:2317), '#.##0')			as PPP_32,
+	Num (Num# (@2319:2332), '#.##0')			as PPP_33,
+	Num (Num# (@2334:2347), '#.##0')			as PPP_34,
+	Num (Num# (@2349:2362), '#.##0')			as PPP_35,
+	Num (Num# (@2364:2377), '#.##0')			as PPP_36,
+	Num (Num# (@2379:2392), '#.##0')			as PPP_37,
+	Num (Num# (@2394:2407), '#.##0')			as PPP_38,
+	Num (Num# (@2409:2422), '#.##0')			as PPP_39,
+	Num (Num# (@2424:2437), '#.##0')			as PPP_40,
+	Num (Num# (@2439:2452), '#.##0')			as PPP_41,
+	Num (Num# (@2454:2467), '#.##0')			as PPP_42,
+	Num (Num# (@2469:2482), '#.##0')			as PPP_43,
+	Num (Num# (@2484:2497), '#.##0')			as PPP_44,
+	Num (Num# (@2499:2512), '#.##0')			as PPP_45,
+	Num (Num# (@2514:2527), '#.##0')			as PPP_46,
+	Num (Num# (@2529:2542), '#.##0')			as PPP_47,
+	Num (Num# (@2544:2557), '#.##0')			as PPP_48,
+	Num (Num# (@2559:2572), '#.##0')			as PPP_49,
+	Num (Num# (@2574:2587), '#.##0')			as PPP_50,
+	Num (Num# (@2589:2602), '#.##0')			as PPP_51,
+	Num (Num# (@2604:2617), '#.##0')			as PPP_52,
+	Num (Num# (@2619:2632), '#.##0')			as PPP_53,
+	Num (Num# (@2634:2647), '#.##0')			as PPP_54,
+	Num (Num# (@2649:2662), '#.##0')			as PPP_55,
+	Num (Num# (@2664:2677), '#.##0')			as PPP_56,
+	Num (Num# (@2679:2692), '#.##0')			as PPP_57,
+	Num (Num# (@2694:2707), '#.##0')			as PPP_58,
+	Num (Num# (@2709:2722), '#.##0')			as PPP_59,
+	Num (Num# (@2724:2737), '#.##0')			as PPP_60 
+        
+FROM
+	[lib://Dados - PMB/FFFT_BRA_PM_R_??????.txt] (fix, codepage is 1252);
+
+
+LET vExtração_PMB_status_temp = IF(ScriptError <> '', ScriptErrorDetails, 'Ok');
+	
+//***************************************************************************
+	// Salva a Extração no QVD PMB_Extracao
+	Store [Extração PMB] Into [lib://QVDs-PMB/PMB_Extracao.qvd];
+		
+
+LET vExtração_PMB_status = IF(ScriptError <> '' AND '$(vExtração_PMB_status_temp)' = 'Ok', ScriptErrorDetails, '$(vExtração_PMB_status_temp)');
+
+LET vLogEnd = NOW();
+
+LET vInterval = Interval(Timestamp#('$(vLogEnd)') - Timestamp#('$(vLogStart)'), 'hh:mm:ss');
+
+// Carrega dados de log da Extração
+Log_PMB:
+LOAD 'Extração PMB' AS Table,
+	 '$(vLogStart)' AS INI_Date,
+	 '$(vLogEnd)' AS END_Date,
+	 '$(vInterval)' AS Duration,
+	 NoOfRows('Extração PMB') AS [# Lines / Date],
+	 '$(vExtração_PMB_status)' AS Status,
+	 'PMB' AS Origin,
+	 'Atual' AS [Timestamp]
+AutoGenerate(1);
+// Exclui a tabela [Extracao PMB]
+Drop Table [Extração PMB];
+
+//***************************************************************************
+
+//***************************************************************************
+//Transformação Mensal
+//***************************************************************************
+LET Max_Counter = 60;
+
+LET vLogStart = NOW();
+
+FOR EACH vCampo IN 'Units', 'Values', 'PPP'
+	Trace;
+	Trace Processando PMB $(vCampo);
+	
+	_Temp_Campos:
+	LOAD NUM(RECNO(), '00') as Linha
+	AutoGenerate $(Max_Counter);
+	
+	INNER JOIN (_Temp_Campos)
+	LOAD '$(vCampo)' as Campo AutoGenerate 1;
+	
+	_Campos:
+	NoConcatenate
+	LOAD CONCAT('['&Campo&'_'&Linha&']', ', ', Linha) as _Campo
+	RESIDENT _Temp_Campos;
+	
+	LET vCampos = peek('_Campo', 0, '_Campos');
+	
+	DROP TABLES _Temp_Campos, _Campos;
+	
+	PMB_Temp:
+	CrossTable (Tipo, Valor , 2)
+	LOAD
+		Region,
+		FCC, 
+		$(vCampos)
+	FROM	
+       [lib://QVDs-PMB/PMB_Extracao.qvd] (qvd)
+	WHERE 1=1; //realiza leitura do QVD de modo NÃO otimizado para evitar falhas
+	
+	IF ('$(vCampo)' = 'Units') THEN
+		[Extração PMB Mensal_tmp]:
+		LOAD
+			 Region as [Cod_Região], 
+			 FCC, 
+			 SUBFIELD(Tipo, '_', 2) as Tipo, 
+			 Valor as $(vCampo)
+		RESIDENT PMB_Temp
+		WHERE Valor > 0;
+	ELSE		
+		LEFT JOIN ([Extração PMB Mensal_tmp])
+		LOAD
+			 Region as [Cod_Região], 
+			 FCC, 
+			 SUBFIELD(Tipo, '_', 2) as Tipo, 
+			 Valor as $(vCampo)
+		RESIDENT PMB_Temp;
+	END IF;
+	
+	DROP TABLE PMB_Temp;
+NEXT;
+
+[Extração PMB Mensal]:
+NoConcatenate
+LOAD 
+	 [Cod_Região], 
+	 FCC, 
+	 Num#(Text(Date(AddMonths('$(v_Data_Referencia)',  -Tipo+1 ),  'YYYYMM'))) as [AnoMês Key], 
+	 Units 	as PMB.Quantidade, 
+	 Values as PMB.Valor, 
+	 PPP 	as PMB.PPP
+RESIDENT [Extração PMB Mensal_tmp];
+
+DROP TABLE [Extração PMB Mensal_tmp];
+
+
+// Últimos 60 meses (5 anos)
+LET Min_Counter = 1;
+LET Max_Counter = 60;
+
+
+Do While Min_Counter <= Max_Counter
+
+	LET Aux_Counter = Right('0' & '$(Min_Counter)', 2);
+	
+	Trace Processando o período: $(v_Mes_$(Aux_Counter));
+	
+	// Atribui a chave [AnoMês Key] correta para cada entrada
+	[Extração PMB Mensal]:
+	LOAD
+		'$(v_Mes_$(Aux_Counter))'			as [AnoMês Key],		
+		*
+	WHERE
+		[PMB.Quantidade] > 0;
+	// Carrega os dados do QVD "PMB_Extracao" criado a partir do arquivo TXT
+	LOAD
+		Region								as [Cod_Região],
+		FCC									as [FCC], 
+		[Units_$(Aux_Counter)]				as [PMB.Quantidade],
+		[Values_$(Aux_Counter)]				as [PMB.Valor],
+		[PPP_$(Aux_Counter)]				as [PMB.PPP]
+	FROM
+		[lib://QVDs-PMB/PMB_Extracao.qvd] (qvd);
+		
+	LET Min_Counter = Min_Counter + 1;
+
+Loop
+
+//Salva os dados no QVD "PMB_Extracao_Mensal"
+Store [Extração PMB Mensal] Into [lib://QVDs-PMB/PMB_Extracao_Mensal.qvd];
+
+// Salva os dados de log
+LET vExtração_PMB_Mensal_status_temp = IF(ScriptError <> '', ScriptErrorDetails, 'Ok');
+
+LET vExtração_PMB_Mensal_status = IF(ScriptError <> '' AND '$(vExtração_PMB_Mensal_status_temp)' = 'Ok', ScriptErrorDetails, '$(vExtração_PMB_Mensal_status_temp)');
+
+LET vLogEnd = NOW();
+
+LET vInterval = Interval(Timestamp#('$(vLogEnd)') - Timestamp#('$(vLogStart)'), 'hh:mm:ss');
+
+Concatenate(Log_PMB)
+LOAD 'Extração PMB Mensal' AS Table,
+	 '$(vLogStart)' AS INI_Date,
+	 '$(vLogEnd)' AS END_Date,
+	 '$(vInterval)' AS Duration,
+	 NoOfRows('Extração PMB Mensal') AS [# Lines / Date],
+	 '$(vExtração_PMB_Mensal_status)' AS Status,
+	 'PMB' AS Origin,
+	 'Atual' AS [Timestamp]
+AutoGenerate(1);
+	Drop Table [Extração PMB Mensal];
+    
+ //***************************************************************************
+//Conexão
+//***************************************************************************
+//LIB CONNECT TO 'PMB_System';
+LIB CONNECT TO 'PMB-System';
+
+
+
+
+//***************************************************************************
+//Aplicação
+//***************************************************************************
+	LET vLogStart = NOW();
+	
+	// Carga inline do último valor de Aplicação (auxiliar)
+	[Aplicacao]:
+	LOAD * INLINE [
+	    Cod3_Aplicação
+	    999999999
+	];
+	
+    Store [Aplicacao] Into [lib://QVDs-PMB/PMB_Aplicacao_Z.qvd];
+	Drop Table [Aplicacao];
+	
+	// Carga dos códigos e descrições sobre Aplicação
+	[Aplicacao]:
+	LOAD 
+// 		APP1_COD	as Cod1_Aplicação,
+// 		APP1_DES	as Des1_Aplicação,
+// 		APP2_COD	as Cod2_Aplicação,
+// 		APP2_DES	as Des2_Aplicação,
+// 		APP3_COD	as Cod3_Aplicação,
+// 		APP3_DES	as Des3_Aplicação;
+		app1_cod	as Cod1_Aplicação,
+		app1_des	as Des1_Aplicação,
+		app2_cod	as Cod2_Aplicação,
+		app2_des	as Des2_Aplicação,
+		app3_cod	as Cod3_Aplicação,
+		app3_des	as Des3_Aplicação;
+SQL SELECT 
+	*
+FROM pm_ppp_app;
+
+
+	CONCATENATE ([Aplicacao])
+	LOAD DISTINCT
+		*
+	FROM 
+		[lib://QVDs-PMB/PMB_Aplicacao*.qvd] (qvd)
+	WHERE
+		Not Exists (Cod3_Aplicação) AND Cod3_Aplicação <> '999999999';
+		
+	LET vExtração_Aplicação_status_temp = IF(ScriptError <> '', ScriptErrorDetails, 'Ok');
+
+	Store [Aplicacao] Into [lib://QVDs-PMB/PMB_Aplicacao.qvd];
+
+	// Salva informações no log
+	LET vExtração_Aplicação_status = IF(ScriptError <> '' AND '$(vExtração_Aplicação_status_temp)' = 'Ok', ScriptErrorDetails, '$(vExtração_Aplicação_status_temp)');
+
+LET vLogEnd = NOW();
+
+LET vInterval = Interval(Timestamp#('$(vLogEnd)') - Timestamp#('$(vLogStart)'), 'hh:mm:ss');
+
+
+Concatenate(Log_PMB)
+LOAD 'Extração Aplicação' AS Table,
+	 '$(vLogStart)' AS INI_Date,
+	 '$(vLogEnd)' AS END_Date,
+	 '$(vInterval)' AS Duration,
+	 NoOfRows('Aplicacao') AS [# Lines / Date],
+	 '$(vExtração_Aplicação_status)' AS Status,
+	 'PMB' AS Origin,
+	 'Atual' AS [Timestamp]
+AutoGenerate(1);
+	Drop Table [Aplicacao];
+//***************************************************************************
+//Classe Terapêutica
+//***************************************************************************
+LET vLogStart = NOW();
+
+	// Carga inline do último valor de classe Terapêutica (auxiliar)
+	[Classe_Terapeutica]:
+	LOAD * INLINE [
+	    Cod4_Classe_Terapeutica
+	    999999999
+	];
+	
+    Store [Classe_Terapeutica] Into [lib://QVDs-PMB/PMB_Classe_Terapeutica_Z.qvd];
+	Drop Table [Classe_Terapeutica];
+
+	// Carga dos códigos e descrições sobre classe Terapêutica
+	[Classe_Terapeutica]:
+ 	LOAD 
+// 		CLASS4_COD as Cod4_Classe_Terapeutica,
+// 		CLASS4_DES  as Des4_Classe_Terapeutica,
+// 		CLASS3_COD  as Cod3_Classe_Terapeutica,
+// 		CLASS3_DES  as Des3_Classe_Terapeutica,
+// 		CLASS2_COD  as Cod2_Classe_Terapeutica,
+// 		CLASS2_DES  as Des2_Classe_Terapeutica,
+// 		CLASS1_COD  as Cod1_Classe_Terapeutica,
+// 		CLASS1_DES  as Des1_Classe_Terapeutica;
+		class4_cod as Cod4_Classe_Terapeutica,
+		class4_des as Des4_Classe_Terapeutica,
+		class3_cod  as Cod3_Classe_Terapeutica,
+		class3_des  as Des3_Classe_Terapeutica,
+		class2_cod  as Cod2_Classe_Terapeutica,
+		class2_des  as Des2_Classe_Terapeutica,
+		class1_cod  as Cod1_Classe_Terapeutica,
+		class1_des  as Des1_Classe_Terapeutica;
+	SQL SELECT
+		*
+	FROM
+		pm_ppp_clas;
+
+
+
+
+	CONCATENATE ([Classe_Terapeutica])
+	LOAD DISTINCT
+		*
+	FROM
+		[lib://QVDs-PMB/PMB_Classe_Terapeutica*.qvd] (qvd)
+	WHERE
+		Not Exists (Cod4_Classe_Terapeutica) AND Cod4_Classe_Terapeutica <> '999999999';
+		
+	LET vExtração_Classe_Terapeutica_status_temp = IF(ScriptError <> '', ScriptErrorDetails, 'Ok');
+
+	// Salva todas as informações de classe Terapêutica em um QVD
+	Store [Classe_Terapeutica] Into [lib://QVDs-PMB/PMB_Classe_Terapeutica.qvd];
+
+	// Salva informações no log
+	LET vExtração_Classe_Terapeutica_status = IF(ScriptError <> '' AND '$(vExtração_Classe_Terapeutica_status_temp)' = 'Ok', ScriptErrorDetails, '$(vExtração_Classe_Terapeutica_status_temp)');
+
+LET vLogEnd = NOW();
+
+LET vInterval = Interval(Timestamp#('$(vLogEnd)') - Timestamp#('$(vLogStart)'), 'hh:mm:ss');
+
+Concatenate(Log_PMB)
+LOAD 'Extração Classe Terapêutica' AS Table,
+	 '$(vLogStart)' AS INI_Date,
+	 '$(vLogEnd)' AS END_Date,
+	 '$(vInterval)' AS Duration,
+	 NoOfRows('Classe_Terapeutica') AS [# Lines / Date],
+	 '$(vExtração_Classe_Terapeutica_status)' AS Status,
+	 'PMB' AS Origin,
+	 'Atual' AS [Timestamp]
+AutoGenerate(1);
+	Drop Table [Classe_Terapeutica];
+    
+//***************************************************************************
+//Apresentações
+//***************************************************************************
+LET vLogStart = NOW();
+
+	// Carga inline do último valor de apresentação (auxiliar)
+	[Pack]:
+	LOAD * INLINE [
+	    Cod_Apresentacao
+	    999999999
+	];
+	
+	Store [Pack] Into [lib://QVDs-PMB/PMB_Pack_Z.qvd];
+	Drop Table [Pack];
+
+
+	// Carga dos códigos e descrições sobre apresentação (Base PACK.DBF)
+	[Pack]:
+	LOAD 
+// 		PACKCODE		as Cod_Pack,
+// 		FCC_COD			as Cod_Apresentacao,
+// 	    PRODCODE		as Cod_Produto,
+// 	    PACK_DES		as Des_Apresentacao,
+// 	    PACK_LNCH		as Data_Lançamento_Apresentacao,
+// 	    CLASS4_COD		as Cod4_Classe_Terapeutica,
+// 	    APP3_COD		as Cod3_Aplicacao,
+// 		MARK_COD		as Cod_Marca,
+// 		GENE_COD		as Cod_Generico;	   
+		packcode		as Cod_Pack,
+		fcc_cod			as Cod_Apresentacao,
+	    prodcode		as Cod_Produto,
+	    pack_des		as Des_Apresentacao,
+	    pack_lnch		as Data_Lançamento_Apresentacao,
+	    class4_cod		as Cod4_Classe_Terapeutica,
+	    app3_cod		as Cod3_Aplicacao,
+		mark_cod		as Cod_Marca,
+		gene_cod		as [Flag G/R/M/S],
+        std_fact		as Fator_Padrao,
+        dsg_fact		as Fator_Doses
+    ;
+    SQL SELECT
+		*
+	FROM
+		pm_ppp_pack;
+        
+        
+
+
+	// Carga dos códigos e descrições sobre apresentação (Descrição do produto, Código do laboratório e Data de lançamento - Base PROD.DBF)
+	LEFT JOIN ([Pack])
+	LOAD
+		prodcode		as Cod_Produto,
+		prod_des		as Des_Produto,
+		manu_cod		as Cod_Laboratorio,
+		prod_lnch		as Data_Lançamento_Produto;
+	SQL SELECT
+		*
+	FROM 
+		pm_ppp_prod;
+	// Carga dos códigos e descrições sobre apresentação (Código de corporação, Descriçãoe sigla do laboratório - Base LAB.DBF)
+	LEFT JOIN ([Pack])
+	LOAD
+		corp_cod		as Cod_Corporacao,
+		manu_cod		as Cod_Laboratorio,
+		manu_des		as Des_Laboratorio,
+		manu_short		as Sigla_Laboratorio;
+	SQL SELECT
+		*
+	FROM 
+		pm_ppp_lab;
+		
+	// Carga dos códigos e descrições sobre apresentação (Descriçãoe sigla da corporação - Base CORP.DBF)	
+	LEFT JOIN ([Pack])
+	LOAD
+		corp_cod		as Cod_Corporacao,
+		corp_des		as Des_Corporacao,
+		corp_res		as Sigla_Corporacao;
+	SQL SELECT
+		*
+	FROM 
+		pm_ppp_corp;
+		
+			
+	CONCATENATE ([Pack])
+	LOAD DISTINCT
+		*
+	FROM
+        [lib://QVDs-PMB/PMB_Pack*.qvd] (qvd)
+	WHERE
+		Not Exists (Cod_Apresentacao) AND Cod_Apresentacao <> '999999999';
+		
+	LET vExtração_Pack_status_temp = IF(ScriptError <> '', ScriptErrorDetails, 'Ok');
+	
+	//Salva todas as informações de apresentação em um QVD
+    Store [Pack] Into [lib://QVDs-PMB/PMB_Pack.qvd];
+
+	// Salva log
+	LET vExtração_Pack_status = IF(ScriptError <> '' AND '$(vExtração_Pack_status_temp)' = 'Ok', ScriptErrorDetails, '$(vExtração_Pack_status_temp)');
+
+LET vLogEnd = NOW();
+
+LET vInterval = Interval(Timestamp#('$(vLogEnd)') - Timestamp#('$(vLogStart)'), 'hh:mm:ss');
+
+Concatenate(Log_PMB)
+LOAD 'Extração Pack' AS Table,
+	 '$(vLogStart)' AS INI_Date,
+	 '$(vLogEnd)' AS END_Date,
+	 '$(vInterval)' AS Duration,
+	 NoOfRows('Pack') AS [# Lines / Date],
+	 '$(vExtração_Pack_status)' AS Status,
+	 'PMB' AS Origin,
+	 'Atual' AS [Timestamp]
+AutoGenerate(1);
+	Drop Table [Pack];		
+//***************************************************************************
+//Moléculas
+//***************************************************************************
+LET vLogStart = NOW();
+
+	// Carga inline do último valor de Molécula (auxiliar)
+	[Molécula]:
+	LOAD * INLINE [
+	    Cod_Molecula
+	    999999999
+	];
+	
+    Store [Molécula] Into [lib://QVDs-PMB/PMB_Molecula_Z.qvd];
+	Drop Table [Molécula];
+	
+	// Carga dos códigos de Molécula e apresentação (BASE PKML.DBF)
+	[Molécula]:
+	LOAD
+		subs_code		as Cod_Molecula,
+		packcode		as Cod_Pack;
+	SQL SELECT
+		*
+	FROM
+		pm_ppp_pkml;
+
+	// Carga dos códigos de Descriçãoda Molécula (BASE SUBS.DBF)
+	LEFT JOIN ([Molécula])
+	LOAD
+		subs_code		as Cod_Molecula,
+		subs_desc		as Des_Molecula;
+	SQL SELECT
+		*
+	FROM
+		pm_ppp_subs;
+
+	CONCATENATE ([Molécula])
+	LOAD DISTINCT
+		*
+	FROM
+        [lib://QVDs-PMB/PMB_Molecula*.qvd] (qvd)
+	WHERE
+		Not Exists (Cod_Molecula) AND Cod_Molecula <> '999999999';
+		
+		
+	LET vExtração_Moléculas_status_temp = IF(ScriptError <> '', ScriptErrorDetails, 'Ok');
+	
+	//Salva todas as informações de apresentação em um QVD
+	Store [Molécula] Into [lib://QVDs-PMB/PMB_Molecula.qvd];
+
+//Salva log
+LET vExtração_Moléculas_status = IF(ScriptError <> '' AND '$(vExtração_Moléculas_status_temp)' = 'Ok', ScriptErrorDetails, '$(vExtração_Moléculas_status_temp)');
+
+LET vLogEnd = NOW();
+
+LET vInterval = Interval(Timestamp#('$(vLogEnd)') - Timestamp#('$(vLogStart)'), 'hh:mm:ss');
+
+Concatenate(Log_PMB)
+LOAD 'Extração Moléculas' AS Table,
+	 '$(vLogStart)' AS INI_Date,
+	 '$(vLogEnd)' AS END_Date,
+	 '$(vInterval)' AS Duration,
+	 NoOfRows('Molécula') AS [# Lines / Date],
+	 '$(vExtração_Moléculas_status)' AS Status,
+	 'PMB' AS Origin,
+	 'Atual' AS [Timestamp]
+AutoGenerate(1);
+	Drop Table [Molécula];
+//***************************************************************************
+//Taxa Dólar
+//***************************************************************************
+LET vLogStart = NOW();
+
+	// Carga inline do último valor do período (auxiliar)
+	[Taxa]:
+	LOAD * INLINE [
+	    Cod_período
+	    999999999
+	];
+	
+    Store [Taxa] Into [lib://QVDs-PMB/PMB_Taxa_Z.qvd];
+	Drop Table [Taxa];
+
+	// Carga dos códigos de período e suas taxas (BASE RATES.DBF)
+	[Taxa]:
+	LOAD 
+		period_cod			as Cod_período,
+	    rate / 1000			as Taxa;
+	SQL SELECT
+		*
+	FROM
+		pm_ppp_rates;
+		
+
+	CONCATENATE ([Taxa])
+	LOAD DISTINCT 
+		*
+	FROM
+        [lib://QVDs-PMB/PMB_Taxa*.qvd] (qvd)
+	WHERE
+		Not Exists (Cod_período) AND Cod_período <> '999999999';
+		
+		LET vExtração_Taxa_status_temp = IF(ScriptError <> '', ScriptErrorDetails, 'Ok');
+
+	//Salva todas as informações de taxa de câmbio em um QVD
+    Store [Taxa] Into [lib://QVDs-PMB/PMB_Taxa.qvd];
+	
+//Salva log	
+LET vExtração_Taxa_status = IF(ScriptError <> '' AND '$(vExtração_Taxa_status_temp)' = 'Ok', ScriptErrorDetails, '$(vExtração_Taxa_status_temp)');
+
+LET vLogEnd = NOW();
+
+LET vInterval = Interval(Timestamp#('$(vLogEnd)') - Timestamp#('$(vLogStart)'), 'hh:mm:ss');
+
+Concatenate(Log_PMB)
+LOAD 'Extração Taxa' AS Table,
+	 '$(vLogStart)' AS INI_Date,
+	 '$(vLogEnd)' AS END_Date,
+	 '$(vInterval)' AS Duration,
+	 NoOfRows('Taxa') AS [# Lines / Date],
+	 '$(vExtração_Taxa_status)' AS Status,
+	 'PMB' AS Origin,
+	 'Atual' AS [Timestamp]
+AutoGenerate(1);
+Drop Table [Taxa];	
+
+//***************************************************************************
+//Região
+//***************************************************************************
+LET vLogStart = NOW();
+
+	// Carga inline do último valor de Molécula (auxiliar)
+	[Região]:
+	LOAD * INLINE [
+	    Cod_Região
+	    999999999
+	];
+	
+    Store [Região] Into [lib://QVDs-PMB/PMB_Regiao_Z.qvd];
+	Drop Table [Região];
+
+	// Carga dos códigos de Região e suas descrições (BASE REGI.DBF)
+	[Região]:
+	LOAD 
+		regn_cod			as Cod_Região,
+	    regn_des			as Des_Região,
+	    regn_res			as Res_Região;
+	SQL SELECT
+		*
+	FROM
+		pm_ppp_regi;
+		
+	CONCATENATE ([Região])
+	LOAD DISTINCT 
+		*
+	FROM
+        [lib://QVDs-PMB/PMB_Regiao*.qvd] (qvd)
+	WHERE
+		Not Exists (Cod_Região) AND Cod_Região <> '999999999';
+		
+		LET vExtração_Região_status_temp = IF(ScriptError <> '', ScriptErrorDetails, 'Ok');
+
+	//Salva todas as informações de Região em um QVD
+    Store [Região] Into [lib://QVDs-PMB/PMB_Regiao.qvd];
+		
+//Salva log
+LET vExtração_Região_status = IF(ScriptError <> '' AND '$(vExtração_Região_status_temp)' = 'Ok', ScriptErrorDetails, '$(vExtração_Região_status_temp)');
+
+LET vLogEnd = NOW();
+
+LET vInterval = Interval(Timestamp#('$(vLogEnd)') - Timestamp#('$(vLogStart)'), 'hh:mm:ss');
+
+Concatenate(Log_PMB)
+LOAD 'Extração Região' AS Table,
+	 '$(vLogStart)' AS INI_Date,
+	 '$(vLogEnd)' AS END_Date,
+	 '$(vInterval)' AS Duration,
+	 NoOfRows('Região') AS [# Lines / Date],
+	 '$(vExtração_Região_status)' AS Status,
+	 'PMB' AS Origin,
+	 'Atual' AS [Timestamp]
+AutoGenerate(1);
+Drop Table [Região];
+
+LET vEnd = NOW();
+
+LET vInterval = Interval(Timestamp#('$(vEnd)') - Timestamp#('$(vStart)'), 'hh:mm:ss');
+
+LET vTOTAL_RELOAD_status = 'Ok';
+
+IF(ScriptErrorCount > 0) THEN
+	LET vTOTAL_RELOAD_status = 'Errors Occurred';
+ENDIF
+
+Concatenate(Log_PMB)
+LOAD 'TEMPO TOTAL DE CARGA - PMB' AS Table,
+	 '$(vStart)' AS INI_Date,
+	 '$(vEnd)' AS END_Date,
+	 '$(vInterval)' AS Duration,
+	 '$(vDataRef)' AS [# Lines / Date],
+	 '$(vTOTAL_RELOAD_status)' AS Status,
+	 'PMB' AS Origin,
+	 'Atual' AS [Timestamp]
+AutoGenerate(1);
+
+Store Table, INI_Date, END_Date, Duration, [# Lines / Date], Status FROM Log_PMB INTO [lib://QVDs-PMB/LOG_PMB.qvd] (txt, delimiter is '\t');
+
+IF (FileTime([lib://QVDs-PMB/LOG_PMB.qvd])) > 0 THEN	
+	Concatenate(Log_PMB)
+	Buffer (Incremental) Load 
+	Table,
+		 INI_Date,
+		 END_Date,
+		 Duration,
+		 [# Lines / Date],
+		 Status,
+		 'PMB' AS Origin,
+		 'Anterior' AS [Timestamp]
+    From [lib://QVDs-PMB/LOG_PMB.qvd] (qvd) WHERE [Timestamp] = 'Atual';
+ENDIF
+
+Store Log_PMB INTO [lib://QVDs-PMB/LOG_PMB.qvd];
+
+DROP TABLE Log_PMB;
+
+IF(ScriptErrorCount > 0) THEN
+	SET ErrorMode = 2;
+	//erro; //Forçar erro
+ENDIF
+
+
+
+
+
+
